@@ -20,9 +20,9 @@
       background: var(--bg);
       color: var(--fg);
       font-family: var(--font-family);
+      min-height: 100vh;
       display: flex;
       flex-direction: column;
-      min-height: 100vh;
     }
 
     header {
@@ -30,7 +30,32 @@
       font-size: 1.5rem;
       font-weight: 700;
       border-bottom: 1px solid var(--fg);
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .logo {
+      width: 40px;
+      height: 40px;
+      background: var(--fg);
+      color: var(--bg);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-weight: bold;
+      border-radius: 50%;
+      font-size: 1rem;
       user-select: none;
+    }
+
+    .back-link {
+      cursor: pointer;
+      color: var(--fg);
+      text-decoration: underline;
+      display: none;
+      /* shown in app view */
+      margin-right: auto;
     }
 
     main {
@@ -47,7 +72,6 @@
       position: relative;
       width: var(--app-size);
       height: var(--app-size);
-      background: transparent;
       cursor: pointer;
       transition: transform 0.25s ease;
       display: flex;
@@ -85,34 +109,52 @@
     .app-icon:hover .app-label {
       opacity: 1;
     }
+
+    #contentArea {
+      flex: 1;
+      padding: 2rem;
+      display: none;
+      /* hidden in hub view */
+    }
   </style>
 </head>
 
 <body>
-  <header>Chris' Apps</header>
-  <main id="appGrid">
-  </main>
+  <header>
+    <div class="logo">CH</div>
+    <span class="back-link" id="backLink">← Back</span>
+    <span style="margin-left:auto;">Chris' Apps</span>
+  </header>
 
-  <section id="contentArea" style="padding: 2rem; border-top: 1px solid var(--fg);"></section>
+  <main id="appGrid"></main>
+  <section id="contentArea"></section>
 
   <script>
-    // App-Definitions modular
     const apps = [
       {
         id: 'python-course',
         name: 'Python Course',
-        icon: `<svg viewBox="0 0 64 64" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="32" cy="32" r="30" /></svg>`
-
+        icon: `<svg viewBox="0 0 64 64" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none">
+                 <circle cx="32" cy="32" r="30" />
+               </svg>`
       },
       {
         id: 'rna-seq-dashboard',
         name: 'RNA-Seq Dashboard',
-        icon: `<svg viewBox="0 0 64 64" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"><rect x="12" y="12" width="40" height="40" /></svg>`
+        icon: `<svg viewBox="0 0 64 64" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none">
+                 <path d="M16 8 Q24 16 16 24 Q8 32 16 40 Q24 48 16 56" />
+                 <path d="M48 8 Q40 16 48 24 Q56 32 48 40 Q40 48 48 56" />
+                 <line x1="16" y1="8" x2="48" y2="8" />
+                 <line x1="16" y1="24" x2="48" y2="24" />
+                 <line x1="16" y1="40" x2="48" y2="40" />
+                 <line x1="16" y1="56" x2="48" y2="56" />
+               </svg>`
       }
-      // New Apps here
     ];
 
     const appGrid = document.getElementById('appGrid');
+    const contentArea = document.getElementById('contentArea');
+    const backLink = document.getElementById('backLink');
 
     apps.forEach(app => {
       const appEl = document.createElement('div');
@@ -123,23 +165,34 @@
       appEl.dataset.appId = app.id;
 
       appEl.innerHTML = `
-      ${app.icon}
-      <div class="app-label">${app.name}</div>
-    `;
+        ${app.icon}
+        <div class="app-label">${app.name}</div>
+      `;
 
       appEl.addEventListener('click', async () => {
         try {
           const response = await fetch(`${app.id}.html`);
-          if (!response.ok) throw new Error(`Error when loading ${app.id}.html`);
+          if (!response.ok) throw new Error(`Error loading ${app.id}.html`);
           const html = await response.text();
-          document.getElementById('contentArea').innerHTML = html;
+          contentArea.innerHTML = html;
+          appGrid.style.display = 'none';
+          contentArea.style.display = 'block';
+          backLink.style.display = 'inline';
         } catch (err) {
-          document.getElementById('contentArea').innerHTML =
-            `<p style="color:red;">Could not load module ${err.message}</p>`;
+          contentArea.innerHTML = `<p style="color:red;">Could not load module ${err.message}</p>`;
+          contentArea.style.display = 'block';
+          appGrid.style.display = 'none';
+          backLink.style.display = 'inline';
         }
       });
 
       appGrid.appendChild(appEl);
+    });
+
+    backLink.addEventListener('click', () => {
+      contentArea.style.display = 'none';
+      appGrid.style.display = 'grid';
+      backLink.style.display = 'none';
     });
   </script>
 </body>
