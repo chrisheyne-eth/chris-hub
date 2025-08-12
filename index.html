@@ -183,7 +183,7 @@
 
       appEl.addEventListener('click', async () => {
         try {
-          const response = await fetch(`${app.id}.html`);
+          const response = await fetch(`./${app.id}.html`);
           if (!response.ok) throw new Error(`Error loading ${app.id}.html`);
           const html = await response.text();
           contentArea.innerHTML = html;
