@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Chris' Apps</title>
+  <style>
+    :root {
+      --bg: #000;
+      --fg: #fff;
+      --accent: #fff;
+      --app-size: 100px;
+      --app-hover-scale: 1.1;
+      --font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--fg);
+      font-family: var(--font-family);
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    header {
+      padding: 1rem 2rem;
+      font-size: 1.5rem;
+      font-weight: 700;
+      border-bottom: 1px solid var(--fg);
+      user-select: none;
+    }
+
+    main {
+      flex: 1;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(var(--app-size), 1fr));
+      gap: 2rem;
+      padding: 2rem;
+      justify-items: center;
+      align-items: center;
+    }
+
+    .app-icon {
+      position: relative;
+      width: var(--app-size);
+      height: var(--app-size);
+      background: transparent;
+      cursor: pointer;
+      transition: transform 0.25s ease;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      border-radius: 16px;
+    }
+
+    .app-icon:hover {
+      transform: scale(var(--app-hover-scale));
+    }
+
+    .app-icon svg,
+    .app-icon img {
+      width: 60%;
+      height: 60%;
+      stroke: var(--fg);
+      fill: var(--fg);
+    }
+
+    .app-label {
+      position: absolute;
+      bottom: -2.5rem;
+      width: 100%;
+      text-align: center;
+      font-size: 0.9rem;
+      font-weight: 600;
+      opacity: 0;
+      color: var(--fg);
+      transition: opacity 0.3s ease;
+      pointer-events: none;
+      user-select: none;
+    }
+
+    .app-icon:hover .app-label {
+      opacity: 1;
+    }
+  </style>
+</head>
+
+<body>
+  <header>Chris' Apps</header>
+  <main id="appGrid">
+  </main>
+
+  <section id="contentArea" style="padding: 2rem; border-top: 1px solid var(--fg);"></section>
+
+  <script>
+    // App-Definitions modular
+    const apps = [
+      {
+        id: 'python-course',
+        name: 'Python Course',
+        icon: `<svg viewBox="0 0 64 64" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="32" cy="32" r="30" /></svg>`
+
+      },
+      {
+        id: 'rna-seq-dashboard',
+        name: 'RNA-Seq Dashboard',
+        icon: `<svg viewBox="0 0 64 64" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"><rect x="12" y="12" width="40" height="40" /></svg>`
+      }
+      // New Apps here
+    ];
+
+    const appGrid = document.getElementById('appGrid');
+
+    apps.forEach(app => {
+      const appEl = document.createElement('div');
+      appEl.className = 'app-icon';
+      appEl.setAttribute('role', 'button');
+      appEl.setAttribute('tabindex', '0');
+      appEl.setAttribute('aria-label', app.name);
+      appEl.dataset.appId = app.id;
+
+      appEl.innerHTML = `
+      ${app.icon}
+      <div class="app-label">${app.name}</div>
+    `;
+
+      appEl.addEventListener('click', async () => {
+        try {
+          const response = await fetch(`${app.id}.html`);
+          if (!response.ok) throw new Error(`Error when loading ${app.id}.html`);
+          const html = await response.text();
+          document.getElementById('contentArea').innerHTML = html;
+        } catch (err) {
+          document.getElementById('contentArea').innerHTML =
+            `<p style="color:red;">Could not load module ${err.message}</p>`;
+        }
+      });
+
+      appGrid.appendChild(appEl);
+    });
+  </script>
+</body>
+
+</html>
