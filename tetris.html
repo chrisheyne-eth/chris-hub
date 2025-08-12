@@ -20,24 +20,24 @@
 
     #game {
       margin-top: 20px;
+      text-align: center;
     }
 
     canvas {
       background: white;
       border: 2px solid black;
       display: block;
-      margin-bottom: 10px;
+      margin: 0 auto 10px;
+      outline: none;
     }
 
     #score {
       font-size: 18px;
-      text-align: center;
+      margin-bottom: 8px;
     }
 
     #controls {
       font-size: 14px;
-      margin-top: 8px;
-      text-align: center;
       line-height: 1.4;
     }
   </style>
@@ -45,7 +45,7 @@
 
 <body>
   <div id="game">
-    <canvas id="board" width="240" height="400"></canvas>
+    <canvas id="board" width="240" height="400" tabindex="0" aria-label="Tetris game board"></canvas>
     <div id="score">Score: 0</div>
     <div id="controls">
       Controls: ← → (Move) | ↑ (Rotate) | ↓ (Soft Drop) | Space (Hard Drop)
@@ -60,13 +60,8 @@
       const cols = 12;
       const rows = 20;
 
-      // The Tetris board matrix (0 = empty)
-      let board = [];
-      for (let r = 0; r < rows; r++) {
-        board[r] = new Array(cols).fill(0);
-      }
+      let board = Array.from({ length: rows }, () => Array(cols).fill(0));
 
-      // Tetromino shapes in 4 rotations
       const tetrominos = {
         I: [
           [[0, 0, 0, 0],
@@ -77,6 +72,14 @@
           [0, 0, 1, 0],
           [0, 0, 1, 0],
           [0, 0, 1, 0]],
+          [[0, 0, 0, 0],
+          [0, 0, 0, 0],
+          [1, 1, 1, 1],
+          [0, 0, 0, 0]],
+          [[0, 1, 0, 0],
+          [0, 1, 0, 0],
+          [0, 1, 0, 0],
+          [0, 1, 0, 0]],
         ],
         J: [
           [[1, 0, 0],
@@ -117,6 +120,12 @@
           [[0, 1, 0],
           [0, 1, 1],
           [0, 0, 1]],
+          [[0, 0, 0],
+          [0, 1, 1],
+          [1, 1, 0]],
+          [[1, 0, 0],
+          [1, 1, 0],
+          [0, 1, 0]],
         ],
         T: [
           [[0, 1, 0],
@@ -139,22 +148,18 @@
           [[0, 0, 1],
           [0, 1, 1],
           [0, 1, 0]],
+          [[0, 0, 0],
+          [1, 1, 0],
+          [0, 1, 1]],
+          [[0, 1, 0],
+          [1, 1, 0],
+          [1, 0, 0]],
         ],
       };
 
-      // Tetromino types array for random pick
       const types = Object.keys(tetrominos);
 
-      // Current piece info
-      let current = {
-        x: 0,
-        y: 0,
-        shape: null,
-        rotation: 0,
-        matrix: null,
-      };
-
-      // Score
+      let current = null;
       let score = 0;
 
       function createPiece() {
@@ -172,16 +177,16 @@
 
       function rotate(piece) {
         const rotations = tetrominos[piece.shape];
+        const oldRotation = piece.rotation;
         piece.rotation = (piece.rotation + 1) % rotations.length;
         piece.matrix = rotations[piece.rotation];
-        // If rotation causes collision or out of bounds, revert
         if (collides(piece)) {
-          // Try wall kicks: left or right shift
+          // Try wall kicks left/right
           if (!tryMove(piece, -1)) {
             if (!tryMove(piece, 1)) {
-              // Revert rotation if no way to fix collision
-              piece.rotation = (piece.rotation - 1 + rotations.length) % rotations.length;
-              piece.matrix = rotations[piece.rotation];
+              // Revert rotation
+              piece.rotation = oldRotation;
+              piece.matrix = rotations[oldRotation];
               return false;
             }
           }
@@ -234,7 +239,7 @@
             board.splice(r, 1);
             board.unshift(new Array(cols).fill(0));
             linesCleared++;
-            r++; // recheck this row after splice
+            r++; // recheck same row after splice
           }
         }
         if (linesCleared > 0) {
@@ -251,8 +256,7 @@
           clearLines();
           current = createPiece();
           if (collides(current)) {
-            // Game over
-            alert('Game Over! Your score: ' + score);
+            setTimeout(() => alert('Game Over! Your score: ' + score), 0);
             reset();
           }
         }
@@ -267,16 +271,13 @@
         clearLines();
         current = createPiece();
         if (collides(current)) {
-          alert('Game Over! Your score: ' + score);
+          setTimeout(() => alert('Game Over! Your score: ' + score), 0);
           reset();
         }
       }
 
       function reset() {
-        board = [];
-        for (let r = 0; r < rows; r++) {
-          board[r] = new Array(cols).fill(0);
-        }
+        board = Array.from({ length: rows }, () => Array(cols).fill(0));
         score = 0;
         document.getElementById('score').textContent = 'Score: 0';
         current = createPiece();
@@ -297,12 +298,10 @@
             if (board[r][c]) {
               drawCell(c, r);
             } else {
-              // Draw white cells with black border for grid effect
               drawCell(c, r, false);
             }
           }
         }
-        // Draw current piece
         for (let r = 0; r < current.matrix.length; r++) {
           for (let c = 0; c < current.matrix[r].length; c++) {
             if (current.matrix[r][c]) {
@@ -315,7 +314,8 @@
       }
 
       // Controls
-      document.addEventListener('keydown', e => {
+      canvas.focus();
+      canvas.addEventListener('keydown', e => {
         switch (e.key) {
           case 'ArrowLeft':
             if (!collides({ ...current, x: current.x - 1 })) current.x--;
@@ -337,7 +337,6 @@
         drawBoard();
       });
 
-      // Game loop (drop piece every 500ms)
       let dropInterval = 500;
       let lastTime = 0;
 
@@ -352,7 +351,7 @@
         requestAnimationFrame(update);
       }
 
-      current = createPiece();
+      reset();
       drawBoard();
       update();
     })();
